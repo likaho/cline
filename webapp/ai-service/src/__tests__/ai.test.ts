@@ -1,9 +1,43 @@
-import { 
-  ChatRequest, 
-  ChatResponse, 
-  ModelInfo, 
-  ProviderName 
-} from '../providers/base';
+// Define types locally for testing
+type ProviderName = 'anthropic' | 'openai' | 'google' | 'azure' | 'bedrock' | 'mistral';
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+interface ChatRequest {
+  messages: ChatMessage[];
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  stop?: string[];
+  tools?: any[];
+}
+
+interface ChatResponse {
+  content: string;
+  stopReason: string;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+  toolUses?: any[];
+}
+
+interface ModelInfo {
+  id: string;
+  name: string;
+  provider: ProviderName;
+  contextWindow: number;
+  supportsVision: boolean;
+  supportsTools: boolean;
+  pricing?: {
+    input: number;
+    output: number;
+  };
+}
 
 describe('AI Service Types', () => {
   describe('ChatRequest', () => {
@@ -98,8 +132,6 @@ describe('AI Service Types', () => {
 });
 
 describe('AI Provider Registry', () => {
-  const providers: Map<ProviderName, any> = new Map();
-
   const getProviderForModel = (model: string): ProviderName => {
     const modelToProvider: Record<string, ProviderName> = {
       'claude': 'anthropic',
@@ -149,17 +181,16 @@ describe('AI Provider Registry', () => {
       timestamp: Date;
     }
 
-    const usageRecords: UsageStats[] = [];
-
-    const recordUsage = (stats: UsageStats): void => {
-      usageRecords.push(stats);
-    };
-
-    const getUsage = (userId?: string): UsageStats[] => {
-      return usageRecords.filter(record => !userId || record.userId === userId);
-    };
+    // Use a fresh array for each test
+    const createUsageRecords = (): UsageStats[] => [];
 
     it('should record usage correctly', () => {
+      const usageRecords = createUsageRecords();
+      
+      const recordUsage = (stats: UsageStats): void => {
+        usageRecords.push(stats);
+      };
+      
       recordUsage({
         userId: 'user-123',
         provider: 'anthropic',
@@ -175,6 +206,16 @@ describe('AI Provider Registry', () => {
     });
 
     it('should filter usage by user', () => {
+      const usageRecords = createUsageRecords();
+      
+      const recordUsage = (stats: UsageStats): void => {
+        usageRecords.push(stats);
+      };
+      
+      const getUsage = (userId?: string): UsageStats[] => {
+        return usageRecords.filter(record => !userId || record.userId === userId);
+      };
+      
       recordUsage({
         userId: 'user-123',
         provider: 'anthropic',

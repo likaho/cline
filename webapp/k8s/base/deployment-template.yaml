@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: API-GATEWAY-NAME
+  namespace: cline
+  labels:
+    app: API-GATEWAY-NAME
+    version: VERSION
+spec:
+  replicas: REPLICAS
+  selector:
+    matchLabels:
+      app: API-GATEWAY-NAME
+  template:
+    metadata:
+      labels:
+        app: API-GATEWAY-NAME
+        version: VERSION
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: API-GATEWAY-NAME
+          image: cline/API-GATEWAY-NAME:VERSION
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 9090
+              name: metrics
+          envFrom:
+            - configMapRef:
+                name: cline-config
+            - secretRef:
+                name: cline-secrets
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: API-GATEWAY-NAME
+                topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: API-GATEWAY-NAME
+  namespace: cline
+spec:
+  selector:
+    app: API-GATEWAY-NAME
+  ports:
+    - port: 80
+      targetPort: 8080
+      name: http
+  type: ClusterIP

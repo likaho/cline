@@ -32,8 +32,21 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "20.x",
+    "@types/jest": "^29.5.13",
+    "@types/supertest": "^6.0.2",
     "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/index.ts"
+    ],
+    "coverageDirectory": "coverage"
   }
 }
